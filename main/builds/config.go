@@ -51,6 +51,7 @@ var Config struct {
 		ApList          []string `yaml:"apList"`
 		IgnoreList      []string `yaml:"ignoreList"`
 		IntraList       []string `yaml:"intraList"`
+		BypassList      []string `yaml:"bypassList"`
 	} `yaml:"proxy"`
 }
 

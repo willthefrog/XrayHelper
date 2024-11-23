@@ -285,6 +285,14 @@ func createProxyChain(ipv6 bool) error {
 			}
 		}
 	}
+	// custom bypass
+	for _, bypass := range builds.Config.Proxy.BypassList {
+		if (currentProto == "ipv4" && !common.IsIPv6(bypass)) || (currentProto == "ipv6" && common.IsIPv6(bypass)) {
+			if err := currentIpt.Append("mangle", "XT", "-d", bypass, "-j", "RETURN"); err != nil {
+				return e.New("bypass "+bypass+" on "+currentProto+" mangle chain XT failed, ", err).WithPrefix(tagTun)
+			}
+		}
+	}
 	// bypass Core itself
 	if err := currentIpt.Append("mangle", "XT", "-m", "owner", "--gid-owner", common.CoreGid, "-j", "RETURN"); err != nil {
 		return e.New("bypass core gid on "+currentProto+" mangle chain XT failed, ", err).WithPrefix(tagTun)
@@ -399,6 +407,14 @@ func createMangleChain(ipv6 bool) error {
 		for _, intraIp6 := range common.IntraNet6 {
 			if err := currentIpt.Append("mangle", "TUN2SOCKS", "-d", intraIp6, "-j", "RETURN"); err != nil {
 				return e.New("bypass intraNet "+intraIp6+" on "+currentProto+" mangle chain TUN2SOCKS failed, ", err).WithPrefix(tagTun)
+			}
+		}
+	}
+	// custom bypass
+	for _, bypass := range builds.Config.Proxy.BypassList {
+		if (currentProto == "ipv4" && !common.IsIPv6(bypass)) || (currentProto == "ipv6" && common.IsIPv6(bypass)) {
+			if err := currentIpt.Append("mangle", "TUN2SOCKS", "-d", bypass, "-j", "RETURN"); err != nil {
+				return e.New("bypass "+bypass+" on "+currentProto+" mangle chain TUN2SOCKS failed, ", err).WithPrefix(tagTun)
 			}
 		}
 	}
