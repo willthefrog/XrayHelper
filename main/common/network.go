@@ -3,6 +3,7 @@ package common
 import (
 	"XrayHelper/main/builds"
 	e "XrayHelper/main/errors"
+	"XrayHelper/main/log"
 	"context"
 	"fmt"
 	"io"
@@ -167,4 +168,47 @@ func GetRawData(url string) ([]byte, error) {
 		return nil, e.New("read data failed, ", err).WithPrefix(tagNetwork)
 	}
 	return raw, nil
+}
+
+func UpdateIntraNet() {
+	for _, ifaceName := range builds.Config.Proxy.ApList {
+		iface, err := net.InterfaceByName(ifaceName)
+		if err != nil {
+			log.HandleDebug(fmt.Sprintf("failed to get interface by name: %v", err))
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			log.HandleDebug(fmt.Sprintf("failed to get addresses for interface: %v", err))
+			continue
+		}
+		for _, addr := range addrs {
+			if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+				// got an ipv4 address
+				newNetStr := ipnet.String()
+				_, newNet, err := net.ParseCIDR(newNetStr)
+				if err != nil {
+					log.HandleDebug(fmt.Sprintf("failed to parse cidr: %v", err))
+					continue
+				}
+
+				isContained := false
+				for _, existingNetStr := range IntraNet {
+					_, existingNet, err := net.ParseCIDR(existingNetStr)
+					if err != nil {
+						continue
+					}
+					// check if newNet is a subnet of existingNet
+					if existingNet.Contains(newNet.IP) {
+						isContained = true
+						break
+					}
+				}
+				if !isContained {
+					IntraNet = append(IntraNet, newNetStr)
+					log.HandleDebug(fmt.Sprintf("added new intranet range: %v", newNetStr))
+				}
+			}
+		}
+	}
 }

@@ -14,6 +14,7 @@ const tagTproxy = "tproxy"
 type Tproxy struct{}
 
 func (this *Tproxy) Enable() error {
+	common.UpdateIntraNet()
 	if err := addRoute(false); err != nil {
 		this.Disable()
 		return err

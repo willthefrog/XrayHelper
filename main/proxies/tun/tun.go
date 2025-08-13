@@ -20,6 +20,7 @@ const tagTun = "tun"
 type Tun struct{}
 
 func (this *Tun) Enable() error {
+	common.UpdateIntraNet()
 	if builds.Config.Proxy.Method == "tun2socks" {
 		if err := startTun2socks(); err != nil {
 			this.Disable()
