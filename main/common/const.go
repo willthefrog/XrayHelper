@@ -3,6 +3,9 @@ package common
 import (
 	"github.com/coreos/go-iptables/iptables"
 	"net"
+	"os/exec"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -32,14 +35,52 @@ var (
 
 func init() {
 	if addrs, err := net.InterfaceAddrs(); err == nil {
-		for _, address := range addrs {
-			if ipnet, ok := address.(*net.IPNet); ok && ipnet.IP.IsGlobalUnicast() {
-				if ipnet.IP.To4() != nil {
-					IntraNet = append(IntraNet, ipnet.IP.String())
-				} else {
-					UseDummy = false
-					IntraNet6 = append(IntraNet6, ipnet.IP.String())
+			for _, address := range addrs {
+				if ipnet, ok := address.(*net.IPNet); ok && ipnet.IP.IsGlobalUnicast() {
+					if ipnet.IP.To4() != nil {
+						IntraNet = append(IntraNet, ipnet.IP.String())
+					} else {
+						UseDummy = false
+						IntraNet6 = append(IntraNet6, ipnet.IP.String())
+					}
 				}
+			}
+		}
+	}
+
+func UpdateIntraNet(apList []string) {
+	out, err := exec.Command("ip", "addr").Output()
+	if err != nil {
+		return
+	}
+
+	interfaces := make(map[string][]string)
+	var currentInterface string
+
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		r := regexp.MustCompile(`^\d+: ([^:@\s]+)`)
+		matches := r.FindStringSubmatch(line)
+		if len(matches) > 1 {
+			currentInterface = matches[1]
+		}
+
+		if strings.Contains(line, "inet ") {
+			fields := strings.Fields(line)
+			if len(fields) > 1 {
+				if _, ipnet, err := net.ParseCIDR(fields[1]); err == nil {
+					interfaces[currentInterface] = append(interfaces[currentInterface], ipnet.String())
+				}
+			}
+		}
+	}
+
+	for _, ap := range apList {
+		wildcard := strings.HasSuffix(ap, "+")
+		prefix := strings.TrimSuffix(ap, "+")
+		for name, ips := range interfaces {
+			if (wildcard && strings.HasPrefix(name, prefix)) || (!wildcard && name == prefix) {
+				IntraNet = append(IntraNet, ips...)
 			}
 		}
 	}
