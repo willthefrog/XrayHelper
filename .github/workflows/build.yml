@@ -27,10 +27,6 @@ jobs:
             goarch: arm64
             cc: aarch64-linux-android35-clang
             cxx: aarch64-linux-android35-clang++
-          - goos: android
-            goarch: amd64
-            cc: x86_64-linux-android35-clang
-            cxx: x86_64-linux-android35-clang++
       fail-fast: false
 
     runs-on: ubuntu-latest
