@@ -116,3 +116,10 @@ jobs:
           name: XrayHelper-${{ env.ASSET_NAME }}
           path: |
             ./XrayHelper-${{ env.ASSET_NAME }}/*
+
+      - name: Trigger build workflow in willthefrog/xforce
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          repository: willthefrog/xforce
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          event-type: build
