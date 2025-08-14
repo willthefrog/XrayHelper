@@ -2,6 +2,7 @@ package commands
 
 import (
 	"XrayHelper/main/builds"
+	"XrayHelper/main/common"
 	e "XrayHelper/main/errors"
 	"XrayHelper/main/log"
 	"XrayHelper/main/proxies"
@@ -30,6 +31,7 @@ func (this *ProxyCommand) Execute(args []string) error {
 	case "enable":
 		log.HandleInfo("proxy: enabling rules")
 		if len(getServicePid()) > 0 {
+			common.UpdateIntraNet(builds.Config.Proxy.ApList)
 			if err := proxy.Enable(); err != nil {
 				return err
 			}
