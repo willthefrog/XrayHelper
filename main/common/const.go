@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"log"
 )
 
 const (
@@ -49,6 +50,7 @@ func init() {
 	}
 
 func UpdateIntraNet(apList []string) {
+	log.Printf("UpdateIntraNet: apList = %v", apList)
 	out, err := exec.Command("ip", "addr").Output()
 	if err != nil {
 		return
@@ -74,6 +76,7 @@ func UpdateIntraNet(apList []string) {
 			}
 		}
 	}
+	log.Printf("UpdateIntraNet: interfaces = %v", interfaces)
 
 	for _, ap := range apList {
 		wildcard := strings.HasSuffix(ap, "+")
