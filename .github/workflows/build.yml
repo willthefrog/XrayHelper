@@ -89,9 +89,26 @@ jobs:
             openssl dgst -$METHOD $FILE | sed 's/([^)]*)//g' >>$DGST
           done
 
-      - name: Change the name
-        run: |
-          mv build_assets XrayHelper-${{ env.ASSET_NAME }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release v${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./XrayHelper-${{ env.ASSET_NAME }}.zip
+          asset_name: XrayHelper-${{ env.ASSET_NAME }}.zip
+          asset_content_type: application/zip
 
       - name: Upload files to Artifacts
         uses: actions/upload-artifact@v4
